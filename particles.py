@@ -1,11 +1,19 @@
 import numpy as np
 import pygame as pg
+from collections import defaultdict
+
 from particle_schema import PARTICLE_TYPES, PARTICLE_INTERACTIONS
 
 DRAG = 0.1
+min_distance = 10
+max_distance = 100
+space = 20
+GRID_SIZE = max_distance * 1.25 / 2
 
 class Particle:
     particle_list = []
+    grid = defaultdict(list)
+
 
     def __init__(self, x, y, ptype):
         self.pos = np.array([x, y], dtype=float)
@@ -44,52 +52,69 @@ class Particle:
             self.pos[1] = height - self.radius
             self.vel[1] *= -1
         
+    def get_grid_pos(self):
+        return (int(self.pos[0] // GRID_SIZE), int(self.pos[1] // GRID_SIZE))
     
     def draw(self, screen):
         pg.draw.circle(screen, self.colour, self.pos, self.radius)
 
 
-def particle_rules(Particle):
-
-    min_distance = 10
-    max_distance = 100
-    space = 20
-
-    for i in range(len(Particle.particle_list)):
-        for j in range(i+1, len(Particle.particle_list)):
-            particle_1 = Particle.particle_list[i]
-            particle_2 = Particle.particle_list[j]
-
-            g_1 = PARTICLE_INTERACTIONS[particle_1.ptype][particle_2.ptype]
-            g_2 = PARTICLE_INTERACTIONS[particle_2.ptype][particle_1.ptype]
-
-            # Calculate distance between particles
-            direction = particle_1.pos - particle_2.pos
-            distance = np.linalg.norm(direction)
-
-            if distance < min_distance:
-                distance = min_distance
-            
-            unit_vector = direction / distance if distance != 0 else np.array([0, 0], dtype=float)
-
-            if distance > max_distance:
-                g_1 = 0
-                g_2 = 0
-
-            separation = distance - (particle_1.radius + particle_2.radius + space)
-
-            if separation < 0:
-                g_1 = -1
-                g_2 = -1
-
-                    # Calculate force of gravity
-            force_1 =  ((particle_1.mass * particle_2.mass) / distance) * unit_vector * g_1
-            force_2 =  ((particle_1.mass * particle_2.mass) / distance) * unit_vector * g_2
+def update_grid():
+    Particle.grid.clear()
+    for particle in Particle.particle_list:
+        grid_pos = particle.get_grid_pos()
+        Particle.grid[grid_pos].append(particle)
 
 
-            # Apply force to particles
-            particle_1.acc -= force_1 / particle_1.mass
-            particle_2.acc += force_2 / particle_2.mass
+
+def particle_rules_grid(Particle):
+    update_grid()
+    checked_pairs = set()
+
+    for (gx, gy), cell_particles in Particle.grid.items():
+
+        for particle in cell_particles:
+            for dx in [-1, 0, 1]:
+                for dy in [-1, 0, 1]:
+                    neighbour_pos = (gx + dx, gy + dy)
+                    for neighbour in Particle.grid.get(neighbour_pos, []):
+                        if particle != neighbour and (particle, neighbour) not in checked_pairs:
+                            particle_interaction(particle, neighbour)
+                            checked_pairs.add((particle, neighbour))
+                            checked_pairs.add((neighbour, particle))
+
+
+def particle_interaction(particle_1, particle_2):
+    g_1 = PARTICLE_INTERACTIONS[particle_1.ptype][particle_2.ptype]
+    g_2 = PARTICLE_INTERACTIONS[particle_2.ptype][particle_1.ptype]
+
+    # Calculate distance between particles
+    direction = particle_1.pos - particle_2.pos
+    distance = np.linalg.norm(direction)
+
+    if distance < min_distance:
+        distance = min_distance
+    
+    unit_vector = direction / distance if distance != 0 else np.array([0, 0], dtype=float)
+
+    if distance > max_distance:
+        g_1 = 0
+        g_2 = 0
+
+    separation = distance - (particle_1.radius + particle_2.radius + space)
+
+    if separation < 0:
+        g_1 = -1
+        g_2 = -1
+
+            # Calculate force of gravity
+    force_1 =  ((particle_1.mass * particle_2.mass) / distance) * unit_vector * g_1
+    force_2 =  ((particle_1.mass * particle_2.mass) / distance) * unit_vector * g_2
+
+
+    # Apply force to particles
+    particle_1.acc -= force_1 / particle_1.mass
+    particle_2.acc += force_2 / particle_2.mass
 
     
 

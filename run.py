@@ -2,7 +2,7 @@ import pygame as pg
 import numpy as np
 import random
 
-from particles import Particle, particle_rules
+from particles import Particle, particle_rules_grid
 
 # Initialize pygame
 pg.init()
@@ -13,14 +13,14 @@ screen = pg.display.set_mode((WIDTH, HEIGHT))
 pg.display.set_caption("Particle Life")
 
 
-for _ in range (30):
+for _ in range (100):
     Particle(random.randint(0, WIDTH), random.randint(0, HEIGHT), 'type_1')
 
-for _ in range (50):
+for _ in range (200):
     Particle(random.randint(0, WIDTH), random.randint(0, HEIGHT), 'type_2')
 
-for _ in range (50):
-    Particle(random.randint(0, WIDTH), random.randint(0, HEIGHT), 'type_3')
+# for _ in range (80):
+#     Particle(random.randint(0, WIDTH), random.randint(0, HEIGHT), 'type_3')
 
 
 
@@ -35,7 +35,7 @@ while running:
         if event.type == pg.QUIT:
             running = False
     
-    particle_rules(Particle)
+    particle_rules_grid(Particle)
 
     for particle in Particle.particle_list:
         particle.update()

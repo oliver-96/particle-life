@@ -21,13 +21,13 @@ PARTICLE_TYPES = {
 PARTICLE_INTERACTIONS = {
     'type_1': {
         'type_1': 0.5,
-        'type_2': 0.5,
+        'type_2': 0.1,
         'type_3': 0.5
     },
 
     'type_2': {
         'type_1': -0.2,
-        'type_2': 0.3,
+        'type_2': 0,
         'type_3': -0.3
     },
 
