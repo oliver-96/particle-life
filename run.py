@@ -8,19 +8,19 @@ from particles import Particle, particle_rules_grid
 pg.init()
 
 # Screen settings
-WIDTH, HEIGHT = 400, 400
+WIDTH, HEIGHT = 700, 700
 screen = pg.display.set_mode((WIDTH, HEIGHT))
 pg.display.set_caption("Particle Life")
 
 
-for _ in range (100):
+for _ in range (80):
     Particle(random.randint(0, WIDTH), random.randint(0, HEIGHT), 'type_1')
 
-for _ in range (200):
+for _ in range (80):
     Particle(random.randint(0, WIDTH), random.randint(0, HEIGHT), 'type_2')
 
-# for _ in range (80):
-#     Particle(random.randint(0, WIDTH), random.randint(0, HEIGHT), 'type_3')
+for _ in range (80):
+    Particle(random.randint(0, WIDTH), random.randint(0, HEIGHT), 'type_3')
 
 
 

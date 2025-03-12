@@ -7,6 +7,7 @@ from particle_schema import PARTICLE_TYPES, PARTICLE_INTERACTIONS
 DRAG = 0.1
 min_distance = 10
 max_distance = 100
+force_factor = 0.001
 space = 20
 GRID_SIZE = max_distance * 1.25 / 2
 
@@ -91,30 +92,60 @@ def particle_interaction(particle_1, particle_2):
     # Calculate distance between particles
     direction = particle_1.pos - particle_2.pos
     distance = np.linalg.norm(direction)
-
-    if distance < min_distance:
-        distance = min_distance
-    
     unit_vector = direction / distance if distance != 0 else np.array([0, 0], dtype=float)
 
-    if distance > max_distance:
-        g_1 = 0
-        g_2 = 0
+    normalised_distance = distance / max_distance
 
-    separation = distance - (particle_1.radius + particle_2.radius + space)
+    force_mag_1 = force_function(normalised_distance, g_1)
+    force_mag_2 = force_function(normalised_distance, g_2)
 
-    if separation < 0:
-        g_1 = -1
-        g_2 = -1
+
+    # if distance < min_distance:
+    #     distance = min_distance
+    
+    # unit_vector = direction / distance if distance != 0 else np.array([0, 0], dtype=float)
+
+    # if distance > max_distance:
+    #     g_1 = 0
+    #     g_2 = 0
+
+    # separation = distance - (particle_1.radius + particle_2.radius + space)
+
+    # if separation < 0:
+    #     g_1 = -1
+    #     g_2 = -1
 
             # Calculate force of gravity
-    force_1 =  ((particle_1.mass * particle_2.mass) / distance) * unit_vector * g_1
-    force_2 =  ((particle_1.mass * particle_2.mass) / distance) * unit_vector * g_2
+    force_1 =  force_mag_1 * unit_vector * max_distance * force_factor
+    force_2 =  force_mag_2 * unit_vector * max_distance * force_factor
 
 
     # Apply force to particles
-    particle_1.acc -= force_1 / particle_1.mass
-    particle_2.acc += force_2 / particle_2.mass
+    particle_1.acc -= force_1
+    particle_2.acc += force_2
+
+
+def force_function(distance, g):
+    MIN_DISTANCE = 0.3
+    MAX_FORCE_DISTANCE = (MIN_DISTANCE + 1) / 2
+
+
+    if distance <= MIN_DISTANCE:
+        force_mag = (distance / MIN_DISTANCE) - 1
+
+    if distance > MIN_DISTANCE and distance <= MAX_FORCE_DISTANCE:
+        force_mag = g / (MAX_FORCE_DISTANCE - MIN_DISTANCE) * (distance - MIN_DISTANCE)
+    
+    if distance > MAX_FORCE_DISTANCE and distance <= 1:
+        force_mag = g / (1 - MAX_FORCE_DISTANCE) * (1 - distance)
+    
+    if distance > 1:
+        force_mag = 0
+    
+    return force_mag
+    
+
+
 
     
 
