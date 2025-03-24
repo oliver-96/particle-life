@@ -71,53 +71,74 @@ def update_grid():
         Particle.grid[grid_pos].append(particle)
 
 
-
 def particle_rules_grid(Particle):
     update_grid()
-    checked_pairs = set()
+
+    interactions = []  
 
     for (gx, gy), cell_particles in Particle.grid.items():
-
+        num_particles = len(cell_particles)
         
+        # Intra-cell interactions
+        for i in range(num_particles):
+            for j in range(i + 1, num_particles):
+                p1, p2 = cell_particles[i], cell_particles[j]
 
-        for particle in cell_particles:
-            for dx in [-1, 0, 1]:
-                for dy in [-1, 0, 1]:
+                interactions.append((p1, p2))
 
-                    neighbour_pos = (gx + dx, gy + dy)
-                    for neighbour in Particle.grid.get(neighbour_pos, []):
-                        if particle != neighbour and (particle, neighbour) not in checked_pairs:
-                            particle_interaction(particle, neighbour)
+        # Interactions with neighboring cells
 
-                            checked_pairs.add((particle, neighbour))
-                            checked_pairs.add((neighbour, particle))
+        for dx, dy in [(1,-1), (1,0), (1,1),(0,1)]:
+            neighbour_pos = (gx + dx, gy + dy)
+            if neighbour_pos not in Particle.grid:
+                continue
 
+            neighbour_particles = Particle.grid[neighbour_pos]
 
-def particle_interaction(particle_1, particle_2):
-    g_1 = PARTICLE_INTERACTIONS[particle_1.ptype][particle_2.ptype]
-    g_2 = PARTICLE_INTERACTIONS[particle_2.ptype][particle_1.ptype]
-
-    direction = particle_1.pos - particle_2.pos
+            for p1 in cell_particles:
+                for p2 in neighbour_particles:
+                    interactions.append((p1, p2))
 
 
-    distance_sq = np.dot(direction, direction)
-    if distance_sq > max_distance**2:
-        return
-    
-    distance = np.sqrt(distance_sq)
+    if not interactions:
+        return 
 
-    unit_vector = direction / distance if distance != 0 else np.array([0, 0], dtype=float)
+    p1_list, p2_list = zip(*interactions)
 
-    normalised_distance = distance / max_distance
+    p1_array = np.array([p.pos for p in p1_list])  # Particle 1 positions
+    p2_array = np.array([p.pos for p in p2_list])  # Particle 2 positions
 
-    force_mag_1 = force_function(normalised_distance, g_1)
-    force_mag_2 = force_function(normalised_distance, g_2)
 
-    force_1 =  force_mag_1 * unit_vector * max_distance * force_factor
-    force_2 =  force_mag_2 * unit_vector * max_distance * force_factor
+    p1_types = np.array([p.ptype for p in p1_list])
+    p2_types = np.array([p.ptype for p in p2_list])
+    directions_array = p1_array - p2_array 
+    distance_sqs_array = np.sum(directions_array * directions_array, axis=1)
+    mask = distance_sqs_array <= max_distance**2
+    directions_array = directions_array[mask]
+    distance_sqs_array = distance_sqs_array[mask]
+    p1_types = p1_types[mask]
+    p2_types = p2_types[mask]  
+    p1_list = [item for i, item in enumerate(p1_list) if mask[i]]
+    p2_list = [item for i, item in enumerate(p2_list) if mask[i]]
 
-    particle_1.acc -= force_1
-    particle_2.acc += force_2
+
+    distances_array = np.sqrt(distance_sqs_array)
+    unit_vectors = np.where(distances_array[:, None] > 0, directions_array / distances_array[:, None], 0)
+
+    g_1_values = np.array([PARTICLE_INTERACTIONS[p1][p2] for p1, p2 in zip(p1_types, p2_types)])
+    g_2_values = np.array([PARTICLE_INTERACTIONS[p2][p1] for p1, p2 in zip(p1_types, p2_types)])
+
+    normalised_distances = distances_array / max_distance
+
+    force_mags_1 = np.vectorize(force_function)(normalised_distances, g_1_values)
+    force_mags_2 = np.vectorize(force_function)(normalised_distances, g_2_values)
+
+    forces_1 = force_mags_1[:, None] * unit_vectors * max_distance * force_factor
+    forces_2 = force_mags_2[:, None] * unit_vectors * max_distance * force_factor
+
+    for i in range(len(p1_list)):
+        p1_list[i].acc -= forces_1[i]
+        p2_list[i].acc += forces_2[i]
 
 
 def force_function(distance, g):
@@ -126,15 +147,13 @@ def force_function(distance, g):
 
 
     if distance <= MIN_DISTANCE:
-        force_mag = (distance / MIN_DISTANCE) - 1
+        return (distance / MIN_DISTANCE) - 1
 
-    if distance > MIN_DISTANCE and distance <= MAX_FORCE_DISTANCE:
-        force_mag = g / (MAX_FORCE_DISTANCE - MIN_DISTANCE) * (distance - MIN_DISTANCE)
+    elif distance <= MAX_FORCE_DISTANCE:
+        return g / (MAX_FORCE_DISTANCE - MIN_DISTANCE) * (distance - MIN_DISTANCE)
     
-    if distance > MAX_FORCE_DISTANCE and distance <= 1:
-        force_mag = g / (1 - MAX_FORCE_DISTANCE) * (1 - distance)
+    elif distance <= 1:
+        return g / (1 - MAX_FORCE_DISTANCE) * (1 - distance)
     
-    if distance > 1:
-        force_mag = 0
-    
-    return force_mag
+    else:
+        return 0

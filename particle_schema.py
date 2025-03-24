@@ -40,7 +40,7 @@ PARTICLE_INTERACTIONS = {
         'type_1': 0.7,
         'type_2': 0.0,
 
-        'type_3': 0.1,
+        'type_3': -0.1,
         'type_4': 0
     },
 
@@ -62,7 +62,7 @@ PARTICLE_INTERACTIONS = {
 
     'type_4': {
         'type_1': 0.03,
-        'type_2': 0.0,
+        'type_2': 0.02,
         'type_3': -0.1,
         'type_4': -0.1
     }

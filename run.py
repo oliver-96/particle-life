@@ -12,7 +12,7 @@ WIDTH, HEIGHT = 600, 600
 
 def initialize_particles(testing):
     if testing:
-        num_particles = 300
+        num_particles = 500
         for _ in range(num_particles):
 
             Particle(random.randint(0, WIDTH), random.randint(0, HEIGHT), 'type_0')
@@ -33,13 +33,13 @@ def initialize_particles(testing):
 
     else:
 
-        for _ in range(100):
-            Particle(random.randint(0, WIDTH), random.randint(0, HEIGHT), 'type_1')
+        # for _ in range(20):
+        #     Particle(random.randint(0, WIDTH), random.randint(0, HEIGHT), 'type_1')
 
-        for _ in range(350):
+        for _ in range(400):
             Particle(random.randint(0, WIDTH), random.randint(0, HEIGHT), 'type_2')
 
-        for _ in range(20):
+        for _ in range(200):
             Particle(random.randint(0, WIDTH), random.randint(0, HEIGHT), 'type_4')
 
 
