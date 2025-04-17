@@ -5,6 +5,7 @@ from collections import defaultdict
 from particle_schema import PARTICLE_TYPES, PARTICLE_INTERACTIONS
 
 DRAG = 0.1
+REBOUND = 2
 MIN_DISTANCE = 0.4
 MAX_DISTANCE = 60
 FORCE_FACTOR = 0.002
@@ -25,6 +26,7 @@ class Particle:
         self.colour = PARTICLE_TYPES[ptype]['colour']
         self.radius = PARTICLE_TYPES[ptype]['radius']
         self.mass = PARTICLE_TYPES[ptype]['mass']
+        self.type = PARTICLE_TYPES[ptype]['type']
 
         Particle.particle_list.append(self)
 
@@ -38,7 +40,6 @@ class Particle:
         self.acc *= 0
 
     def boundary(self, width, height):
-        REBOUND = 2
 
         if self.pos[0] < self.radius:
             self.pos[0] = self.radius
@@ -102,6 +103,9 @@ def particle_rules_grid(Particle):
 
     if not interactions:
         return 
+    process_interactions(interactions)
+    
+def process_interactions(interactions):
 
     p1_list, p2_list = zip(*interactions)
 
@@ -109,25 +113,29 @@ def particle_rules_grid(Particle):
     p2_pos_array = np.array([p.pos for p in p2_list])  # Particle 2 positions
 
     directions_array = p1_pos_array - p2_pos_array 
-    distance_sqs_array = np.sum(directions_array * directions_array, axis=1)
+    distance_sqs_array = np.einsum('ij,ij->i', directions_array, directions_array)
+
 
     mask = distance_sqs_array <= MAX_DISTANCE**2
 
     directions_array = directions_array[mask]
     distance_sqs_array = distance_sqs_array[mask]
 
-    p1_list = [item for i, item in enumerate(p1_list) if mask[i]]
-    p2_list = [item for i, item in enumerate(p2_list) if mask[i]]
+    mask_indices = np.flatnonzero(mask)
+    p1_list = [p1_list[i] for i in mask_indices]
+    p2_list = [p2_list[i] for i in mask_indices]
 
-    p1_types = np.array([p.ptype for p in p1_list])
-    p2_types = np.array([p.ptype for p in p2_list])
+    p1_types = np.array([p.type for p in p1_list])
+    p2_types = np.array([p.type for p in p2_list])
 
 
     distances_array = np.sqrt(distance_sqs_array)
-    unit_vectors = np.where(distances_array[:, None] > 0, directions_array / distances_array[:, None], 0)
 
-    g_1_values = np.array([PARTICLE_INTERACTIONS[p1][p2] for p1, p2 in zip(p1_types, p2_types)])
-    g_2_values = np.array([PARTICLE_INTERACTIONS[p2][p1] for p1, p2 in zip(p1_types, p2_types)])
+    unit_vectors = directions_array / distances_array[:, None]
+    unit_vectors[distances_array == 0] = 0
+
+    g_1_values = PARTICLE_INTERACTIONS[p1_types, p2_types]
+    g_2_values = PARTICLE_INTERACTIONS[p2_types, p1_types]
 
     normalised_distances = distances_array / MAX_DISTANCE
 

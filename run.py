@@ -13,7 +13,7 @@ WIDTH, HEIGHT = 600, 600
 
 def initialize_particles(testing):
     if testing:
-        num_particles = 400
+        num_particles = 620
 
         grid_size = int(np.sqrt(num_particles))  
         spacing_x = WIDTH // grid_size          
@@ -28,14 +28,14 @@ def initialize_particles(testing):
             
     else:
 
-        for _ in range(200):
+        for _ in range(100):
             Particle(random.randint(0, WIDTH), random.randint(0, HEIGHT), 'type_1')
 
-        # for _ in range(150):
-        #     Particle(random.randint(0, WIDTH), random.randint(0, HEIGHT), 'type_2')
+        for _ in range(100):
+            Particle(random.randint(0, WIDTH), random.randint(0, HEIGHT), 'type_2')
 
-        for _ in range(200):
-            Particle(random.randint(0, WIDTH), random.randint(0, HEIGHT), 'type_4')
+        # for _ in range(100):
+        #     Particle(random.randint(0, WIDTH), random.randint(0, HEIGHT), 'type_3')
 
 
 def run(testing=False):
