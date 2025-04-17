@@ -3,6 +3,7 @@ import numpy as np
 import random
 import argparse
 import time
+import sys
 
 
 
@@ -12,32 +13,26 @@ WIDTH, HEIGHT = 600, 600
 
 def initialize_particles(testing):
     if testing:
-        num_particles = 500
-        for _ in range(num_particles):
+        num_particles = 400
 
-            Particle(random.randint(0, WIDTH), random.randint(0, HEIGHT), 'type_0')
-
-            grid_size = int(np.sqrt(num_particles))  
-            spacing_x = WIDTH // grid_size          
-            spacing_y = HEIGHT // grid_size        
+        grid_size = int(np.sqrt(num_particles))  
+        spacing_x = WIDTH // grid_size          
+        spacing_y = HEIGHT // grid_size        
             
-            for i in range(grid_size):
-                for j in range(grid_size):
-                    if len(Particle.particle_list) >= num_particles:
-                        return  
-                    
-                    x = i * spacing_x + spacing_x // 2 
-                    y = j * spacing_y + spacing_y // 2
-                    
-                    Particle(x, y, 'type_0')
-
+        for i in range(grid_size):
+            for j in range(grid_size):
+                x = i * spacing_x + spacing_x // 2 
+                y = j * spacing_y + spacing_y // 2
+                
+                Particle(x, y, 'type_0')
+            
     else:
 
-        # for _ in range(20):
-        #     Particle(random.randint(0, WIDTH), random.randint(0, HEIGHT), 'type_1')
+        for _ in range(200):
+            Particle(random.randint(0, WIDTH), random.randint(0, HEIGHT), 'type_1')
 
-        for _ in range(400):
-            Particle(random.randint(0, WIDTH), random.randint(0, HEIGHT), 'type_2')
+        # for _ in range(150):
+        #     Particle(random.randint(0, WIDTH), random.randint(0, HEIGHT), 'type_2')
 
         for _ in range(200):
             Particle(random.randint(0, WIDTH), random.randint(0, HEIGHT), 'type_4')
@@ -86,5 +81,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--test", action="store_true", help="FPS testing mode")
     args = parser.parse_args()
+
     run(testing=args.test)
 
