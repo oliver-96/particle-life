@@ -3,13 +3,12 @@ import pygame as pg
 from collections import defaultdict
 
 from particle_schema import PARTICLE_TYPES, PARTICLE_INTERACTIONS
+from setup_schema import SIM_WIDTH, SIM_HEIGHT, DRAG, MIN_DISTANCE, MAX_DISTANCE, FORCE_FACTOR
 
-DRAG = 0.1
-REBOUND = 2
-MIN_DISTANCE = 0.4
-MAX_DISTANCE = 60
-FORCE_FACTOR = 0.002
 GRID_SIZE = MAX_DISTANCE * 1.25
+max_width_cell = int(SIM_WIDTH // GRID_SIZE) - 1
+max_height_cell = int(SIM_HEIGHT // GRID_SIZE) - 1
+
 
 class Particle:
     particle_list = []
@@ -41,21 +40,17 @@ class Particle:
 
     def boundary(self, width, height):
 
-        if self.pos[0] < self.radius:
-            self.pos[0] = self.radius
-            self.vel[0] *= -1 * REBOUND
+        if self.pos[0] < 0:
+            self.pos[0] = width
 
-        if self.pos[0] > width - self.radius:
-            self.pos[0] = width - self.radius
-            self.vel[0] *= -1 * REBOUND
+        if self.pos[0] > width:
+            self.pos[0] = 0
         
-        if self.pos[1] < self.radius:
-            self.pos[1] = self.radius
-            self.vel[1] *= -1 * REBOUND
+        if self.pos[1] < 0:
+            self.pos[1] = height
         
-        if self.pos[1] > height - self.radius:
-            self.pos[1] = height - self.radius
-            self.vel[1] *= -1 * REBOUND
+        if self.pos[1] > height:
+            self.pos[1] = 0
         
     def get_grid_pos(self):
         return (int(self.pos[0] // GRID_SIZE), int(self.pos[1] // GRID_SIZE))
@@ -80,7 +75,6 @@ def particle_rules_grid(Particle):
         num_particles = len(cell_particles)
         
         # Intra-cell interactions
-
         for i in range(num_particles):
             for j in range(i + 1, num_particles):
                 p1, p2 = cell_particles[i], cell_particles[j]
@@ -88,9 +82,19 @@ def particle_rules_grid(Particle):
                 interactions.append((p1, p2))
 
         # Interactions with neighboring cells
-
         for dx, dy in [(1,-1), (1,0), (1,1),(0,1)]:
-            neighbour_pos = (gx + dx, gy + dy)
+
+            neighbour_x = gx + dx
+            neighbour_y = gy + dy
+
+            if neighbour_x > max_width_cell:
+                neighbour_x = 0
+            if neighbour_y > max_height_cell:
+                neighbour_y = 0
+            if neighbour_y < 0:
+                neighbour_y = max_height_cell
+
+            neighbour_pos = (neighbour_x, neighbour_y)
             if neighbour_pos not in Particle.grid:
                 continue
 
@@ -113,6 +117,10 @@ def process_interactions(interactions):
     p2_pos_array = np.array([p.pos for p in p2_list])  # Particle 2 positions
 
     directions_array = p1_pos_array - p2_pos_array 
+
+    directions_array[:, 0] -= np.round(directions_array[:, 0] / SIM_WIDTH) * SIM_WIDTH
+    directions_array[:, 1] -= np.round(directions_array[:, 1] / SIM_HEIGHT) * SIM_HEIGHT
+
     distance_sqs_array = np.einsum('ij,ij->i', directions_array, directions_array)
 
 

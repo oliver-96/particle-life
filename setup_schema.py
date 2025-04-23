@@ -1,0 +1,11 @@
+# Screen size
+SIM_WIDTH = 600
+SIM_HEIGHT = 600
+
+UI_WIDTH = 300
+
+# Global particle values
+DRAG = 0.05
+MIN_DISTANCE = 0.4
+MAX_DISTANCE = 60
+FORCE_FACTOR = 0.002

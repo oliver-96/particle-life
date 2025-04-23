@@ -37,13 +37,43 @@ PARTICLE_TYPES = {
     }
 }
 
+PARTICLE_INTERACTIONS_DICT = {
+    'type_0': {
+        'type_0': 0.5,
+        'type_1': 0,
+        'type_2': 0,
+        'type_3': 0,
+        'type_4': 0
+    },
+    'type_1': {
+        'type_0': 0,
+        'type_1': 0.5,
+        'type_2': 0.3,
+        'type_3': 0,
+        'type_4': 0
+    },
+    'type_2': {
+        'type_0': 0,
+        'type_1': 0,
+        'type_2': 0.5,
+        'type_3': 0.3,
+        'type_4': 0
+    },
+    'type_3': {
+        'type_0': 0,
+        'type_1': 0,
+        'type_2': 0,
+        'type_3': 0.5,
+        'type_4': 0.3
+    },
+    'type_4': {
+        'type_0': 0,
+        'type_1': 0,
+        'type_2': 0,
+        'type_3': 0,
+        'type_4': 0.5
+    }
+}
 
-PARTICLE_INTERACTIONS = np.array([
-    # 0   1  2  3  4
-    [0.5, 0, 0, 0, 0],  # Type 0 interactions
-    [0, 0.5, 0, -0.1, 0.2],  # Type 1 interactions
-    [0, 0.1, 0, -0.15, 1],   # Type 2 interactions 
-    [0, -0.07, 0.02, -0.1, 0.5],   # Type 3 interactions    
-    [0, -0.07, 0.02, -0.1, 0.5],   # Type 4 interactions
-   
-])
+sorted_particles_interaction_dict = sorted(PARTICLE_INTERACTIONS_DICT.keys()) 
+PARTICLE_INTERACTIONS = np.array([[PARTICLE_INTERACTIONS_DICT[row][col] for col in sorted_particles_interaction_dict] for row in sorted_particles_interaction_dict])
