@@ -3,36 +3,26 @@ import numpy as np
 PARTICLE_TYPES = {
     'type_0': {
         'colour': (255, 255, 255),
-        'radius': 5,
-        'mass': 1,
         'type': 0
     },
 
     'type_1': {
         'colour': (255, 0, 0),
-        'radius': 5,
-        'mass': 1,
         'type': 1
     },
 
     'type_2': {
         'colour': (0, 255, 0),
-        'radius': 5,
-        'mass': 1,
         'type': 2
     },
 
     'type_3': {
         'colour': (0, 0, 255),
-        'radius': 5,
-        'mass': 1,
         'type': 3
     },
 
     'type_4': {
         'colour': (0, 255, 255),
-        'radius': 5,
-        'mass': 1,
         'type': 4
     }
 }

@@ -1,9 +1,10 @@
 import numpy as np
 import pygame as pg
+import random
 from collections import defaultdict
 
 from particle_schema import PARTICLE_TYPES, PARTICLE_INTERACTIONS
-from setup_schema import SIM_WIDTH, SIM_HEIGHT, DRAG, MIN_DISTANCE, MAX_DISTANCE, FORCE_FACTOR
+from setup_schema import SIM_WIDTH, SIM_HEIGHT, DRAG, MIN_DISTANCE, MAX_DISTANCE, FORCE_FACTOR, RADIUS
 
 GRID_SIZE = MAX_DISTANCE * 1.25
 max_width_cell = int(SIM_WIDTH // GRID_SIZE) - 1
@@ -23,12 +24,29 @@ class Particle:
 
         self.ptype = ptype
         self.colour = PARTICLE_TYPES[ptype]['colour']
-        self.radius = PARTICLE_TYPES[ptype]['radius']
-        self.mass = PARTICLE_TYPES[ptype]['mass']
+        self.radius = RADIUS
         self.type = PARTICLE_TYPES[ptype]['type']
 
         Particle.particle_list.append(self)
 
+    @classmethod
+    def create_particles(cls, particle_count, ptype):
+        for _ in range(particle_count):
+            x = random.randint(0, SIM_WIDTH)
+            y = random.randint(0, SIM_HEIGHT)
+            cls(x, y, ptype)
+
+    @classmethod
+    def create_particles_testing(cls, particle_count):
+        grid_size = int(np.sqrt(particle_count))  
+        spacing_x = SIM_WIDTH // grid_size          
+        spacing_y = SIM_HEIGHT // grid_size        
+            
+        for i in range(grid_size):
+            for j in range(grid_size):
+                x = i * spacing_x + spacing_x // 2 
+                y = j * spacing_y + spacing_y // 2 
+                cls(x, y, 'type_0')
 
     def update(self):
         drag_force = self.vel**2 * DRAG * np.sign(self.vel) * -1
@@ -57,6 +75,9 @@ class Particle:
     
     def draw(self, screen):
         pg.draw.circle(screen, self.colour, self.pos, self.radius)
+
+
+
 
 
 def update_grid():
