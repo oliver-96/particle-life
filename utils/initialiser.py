@@ -7,3 +7,5 @@ def initialise_particles(testing=False):
     else:
         Particle.create_particles(150, 'type_0')
         Particle.create_particles(150, 'type_1')
+        Particle.create_particles(150, 'type_2')
+        Particle.create_particles(150, 'type_3')
