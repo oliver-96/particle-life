@@ -4,7 +4,7 @@ import numpy as np
 
 from ui.ui_utils import ParticleInteractionUI
 from sim_config.setup_schema import SIM_WIDTH, SIM_HEIGHT, UI_WIDTH, RADIUS, FPS
-from particles_array.particle_schema import PARTICLE_INTERACTIONS
+from particles.particle_schema import PARTICLE_INTERACTIONS
 from utils.initialiser import initialise_particles
 
 HEIGHT = SIM_HEIGHT

@@ -1,4 +1,4 @@
-from particles_array.particle import ParticleSystems
+from particles.particle import ParticleSystems
 
 def initialise_particles(testing=False):
     particle_manager = ParticleSystems()

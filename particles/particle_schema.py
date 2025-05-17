@@ -1,68 +1,53 @@
 import numpy as np
 
+#  Particle types
 PARTICLE_TYPES = {
-    'type_0': {
+    0: {
         'colour': (255, 255, 255),
-        'type': 0
     },
 
-    'type_1': {
+    1: {
         'colour': (255, 0, 0),
-        'type': 1
     },
 
-    'type_2': {
+    2: {
         'colour': (0, 255, 0),
-        'type': 2
     },
 
-    'type_3': {
+    3: {
         'colour': (0, 0, 255),
-        'type': 3
     },
 
-    'type_4': {
+    4: {
         'colour': (0, 255, 255),
-        'type': 4
     }
 }
 
 PARTICLE_INTERACTIONS_DICT = {
-    'type_0': {
-        'type_0': 0.5,
-        'type_1': 0,
-        'type_2': 0,
-        'type_3': 0,
-        'type_4': 0
+    0: {
+        0: 0.5,
+        1: 0.3,
+        2: 0,
+        3: 0,
     },
-    'type_1': {
-        'type_0': 0,
-        'type_1': 0.5,
-        'type_2': 0.3,
-        'type_3': 0,
-        'type_4': 0
+    1: {
+        0: 0,
+        1: 0.5,
+        2: 0.3,
+        3: 0,
     },
-    'type_2': {
-        'type_0': 0,
-        'type_1': 0,
-        'type_2': 0.5,
-        'type_3': 0.3,
-        'type_4': 0
+    2: {
+        0: 0,
+        1: 0,
+        2: 0.5,
+        3: 0.3,
     },
-    'type_3': {
-        'type_0': 0,
-        'type_1': 0,
-        'type_2': 0,
-        'type_3': 0.5,
-        'type_4': 0.3
+    3: {
+        0: 0,
+        1: 0,
+        2: 0,
+        3: 0.5,
     },
-    'type_4': {
-        'type_0': 0,
-        'type_1': 0,
-        'type_2': 0,
-        'type_3': 0,
-        'type_4': 0.5
-    }
 }
 
 sorted_particles_interaction_dict = sorted(PARTICLE_INTERACTIONS_DICT.keys()) 

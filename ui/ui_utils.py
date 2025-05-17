@@ -2,7 +2,7 @@ import pygame as pg
 import pygame_gui
 
 from ui.ui_constants import *
-from particles_array.particle_schema import PARTICLE_INTERACTIONS, PARTICLE_TYPES
+from particles.particle_schema import PARTICLE_INTERACTIONS, PARTICLE_TYPES
 
 class ParticleInteractionUI:
     def __init__ (self, matrix_size, manager, screen):
