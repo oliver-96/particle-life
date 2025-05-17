@@ -1,44 +1,37 @@
 import numpy as np
 
-# Particle simulation configuration
-WIDTH, HEIGHT = 800, 800
-DT = 0.01
+#  Particle types
+PARTICLE_TYPES = {
+    0: {
+        'colour': (255, 255, 255),
+    },
 
-# Particle properties
-RADIUS = 2
-MIN_DISTANCE = 0.3
-MAX_DISTANCE = 80
-MAX_FORCE_DISTANCE = (MIN_DISTANCE + 1) / 2
+    1: {
+        'colour': (255, 0, 0),
+    },
 
-DRAG = 0.05
-FORCE_FACTOR = 3
+    2: {
+        'colour': (0, 255, 0),
+    },
 
-GRID_SIZE = MAX_DISTANCE * 1.25
+    3: {
+        'colour': (0, 0, 255),
+    },
 
-
-# Colour
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
-COLOUR_MAP = {
-    0: WHITE,
-    1: RED,
-    2: GREEN,
-    3: BLUE
+    4: {
+        'colour': (0, 255, 255),
+    }
 }
 
-#  Particle types
 PARTICLE_INTERACTIONS_DICT = {
     0: {
         0: 0.5,
-        1: 0,
+        1: 0.3,
         2: 0,
         3: 0,
     },
     1: {
-        0: 0.3,
+        0: 0,
         1: 0.5,
         2: 0.3,
         3: 0,

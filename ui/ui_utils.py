@@ -2,7 +2,7 @@ import pygame as pg
 import pygame_gui
 
 from ui.ui_constants import *
-from particles.particle_schema import PARTICLE_INTERACTIONS, PARTICLE_TYPES
+from particles_array.particle_schema import PARTICLE_INTERACTIONS, PARTICLE_TYPES
 
 class ParticleInteractionUI:
     def __init__ (self, matrix_size, manager, screen):
@@ -41,8 +41,8 @@ class ParticleInteractionUI:
             if event.ui_element == btn:
                 self.selected_i, self.selected_j = i, j
                 current_value = PARTICLE_INTERACTIONS[i, j]
-                self.particle_colour_1 = PARTICLE_TYPES[f"type_{i}"]['colour']
-                self.particle_colour_2 = PARTICLE_TYPES[f"type_{j}"]['colour']
+                self.particle_colour_1 = PARTICLE_TYPES[i]['colour']
+                self.particle_colour_2 = PARTICLE_TYPES[j]['colour']
                 if self.slider:
                     self.slider.kill()
                     self.label.kill()
@@ -110,7 +110,7 @@ class ParticleInteractionUI:
                     else:
                         k = i
 
-                    colour = PARTICLE_TYPES[f"type_{k}"]['colour']
+                    colour = PARTICLE_TYPES[k]['colour']
 
                 pg.draw.rect(self.screen, colour, rect)
 

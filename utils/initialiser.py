@@ -1,11 +1,15 @@
-from particles.particle import Particle
+from particles_array.particle import ParticleSystems
 
 def initialise_particles(testing=False):
+    particle_manager = ParticleSystems()
+
     if testing:
-        num_particles = 675
-        Particle.create_particles_testing(num_particles)
+        num_particles = 1000
+        particle_manager.add_system(num_particles, 0, testing=True)
     else:
-        Particle.create_particles(150, 'type_0')
-        Particle.create_particles(150, 'type_1')
-        Particle.create_particles(150, 'type_2')
-        Particle.create_particles(150, 'type_3')
+        particle_manager.add_system(200, 0)
+        particle_manager.add_system(200, 1)
+        particle_manager.add_system(200, 2)
+        particle_manager.add_system(200, 3)
+    
+    return particle_manager

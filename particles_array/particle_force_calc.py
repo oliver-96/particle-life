@@ -1,7 +1,7 @@
 import numpy as np
 from numba import njit
 
-from schema import MIN_DISTANCE, MAX_FORCE_DISTANCE
+from sim_config.setup_schema import MIN_DISTANCE, MAX_FORCE_DISTANCE
 
 @njit
 def calculate_forces(normalised_distances, g_values):

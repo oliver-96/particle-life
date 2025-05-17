@@ -1,4 +1,5 @@
 from sim_config.setup_schema import SIM_WIDTH
+
 CELL_SIZE = 25
 START_X = SIM_WIDTH + 45
 START_Y = 10

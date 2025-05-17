@@ -2,11 +2,9 @@ import pygame as pg
 import pygame_gui
 import numpy as np
 
-from particles.particle import Particle
-from particles.particle_rules import particle_rules_grid
 from ui.ui_utils import ParticleInteractionUI
 from sim_config.setup_schema import SIM_WIDTH, SIM_HEIGHT, UI_WIDTH, RADIUS, FPS
-from particles.particle_schema import PARTICLE_INTERACTIONS
+from particles_array.particle_schema import PARTICLE_INTERACTIONS
 from utils.initialiser import initialise_particles
 
 HEIGHT = SIM_HEIGHT
@@ -39,9 +37,10 @@ def handle_events(particle_ui, particle_type_list, manager):
 
 def run_sim(testing=False):
     screen, manager = setup_environment()
-    initialise_particles(testing)
+    particle_manager = initialise_particles(testing)
 
-    particle_type_list = list({p.type for p in Particle.particle_list})
+    particle_type_list = np.unique(particle_manager.system_type).tolist()
+
     matrix_size = len(PARTICLE_INTERACTIONS)
     screen.fill((40, 40, 40), rect=pg.Rect(SIM_WIDTH, 0, UI_WIDTH, HEIGHT))
 
@@ -59,13 +58,10 @@ def run_sim(testing=False):
         screen.fill((0, 0, 0), rect=pg.Rect(0, 0, SIM_WIDTH+RADIUS, HEIGHT))
         screen.fill((40, 40, 40), rect=pg.Rect(SIM_WIDTH * 1.13, HEIGHT / 2.1, UI_WIDTH, HEIGHT))
 
-
-        particle_rules_grid(Particle)
-
-        for particle in Particle.particle_list:
-            particle.update()
-            particle.boundary(SIM_WIDTH, SIM_HEIGHT)
-            particle.draw(screen)
+        particle_manager.check_interactions()
+        particle_manager.update_particles()
+        particle_manager.apply_boundary_conditions()
+        particle_manager.draw_particles(screen)
 
         manager.update(time_delta)
         manager.draw_ui(screen)

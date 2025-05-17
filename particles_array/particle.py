@@ -1,16 +1,16 @@
 import pygame
 import numpy as np
 from collections import defaultdict
-from itertools import combinations
 
+from sim_config.setup_schema import SIM_WIDTH, SIM_HEIGHT, DRAG, MAX_DISTANCE, RADIUS, DT, FORCE_FACTOR
+from particles_array.particle_schema import PARTICLE_INTERACTIONS, PARTICLE_TYPES
+from particles_array.particle_force_calc import calculate_forces
 
-from schema import WIDTH, HEIGHT, RADIUS, DT, DRAG, MAX_DISTANCE, FORCE_FACTOR, PARTICLE_INTERACTIONS, COLOUR_MAP, GRID_SIZE
-from particle_force_calc import calculate_forces
-
+GRID_SIZE = MAX_DISTANCE * 1.25
 NEIGHTBOUR_OFFSET = [(1,-1), (1,0), (1,1),(0,1)]
 
-max_width_cell = int(WIDTH // GRID_SIZE) - 1
-max_height_cell = int(HEIGHT // GRID_SIZE) - 1
+max_width_cell = int(SIM_WIDTH // GRID_SIZE) - 1
+max_height_cell = int(SIM_HEIGHT // GRID_SIZE) - 1
 
 
 class ParticleSystems:
@@ -24,8 +24,14 @@ class ParticleSystems:
         self.system_type = np.empty(0, dtype=int)
         self.pair_indicies = ()
 
-    def add_system(self, number_of_particles, system_type):
-        pos_array = np.random.rand(number_of_particles, 2) * [WIDTH, HEIGHT]
+    def add_system(self, number_of_particles, system_type, testing=False):
+        if testing:
+            x_list, y_list = self.get_testing_positions(number_of_particles)
+            pos_array = np.column_stack((x_list, y_list))
+            number_of_particles = len(x_list)
+        else:
+            pos_array = np.random.rand(number_of_particles, 2) * [SIM_WIDTH, SIM_HEIGHT]
+
         vel_array = np.zeros((number_of_particles, 2))
         acc_array = np.zeros((number_of_particles, 2))
         system_type_array = np.full(number_of_particles, system_type)
@@ -37,6 +43,24 @@ class ParticleSystems:
 
         self.pair_indicies = np.triu_indices(len(self.pos), k=1)
 
+
+    def get_testing_positions(self, number_of_particles):
+        grid_size = int(np.sqrt(number_of_particles))  
+        spacing_x = SIM_WIDTH // grid_size          
+        spacing_y = SIM_HEIGHT // grid_size        
+            
+        x_list = []
+        y_list = []
+        for i in range(grid_size):
+            for j in range(grid_size):
+                x = i * spacing_x + spacing_x // 2 
+                y = j * spacing_y + spacing_y // 2 
+
+                x_list.append(x)
+                y_list.append(y)
+
+        return x_list, y_list
+
     def update_particles(self):
         drag_force = self.vel**2 * DRAG * np.sign(self.vel) * -1
 
@@ -47,7 +71,7 @@ class ParticleSystems:
         self.acc[:] = 0
 
     def apply_boundary_conditions(self):
-        for dim, limit in enumerate([WIDTH, HEIGHT]):
+        for dim, limit in enumerate([SIM_WIDTH, SIM_HEIGHT]):
             self.pos[:, dim] = np.mod(self.pos[:, dim], limit)
 
     def get_grid_position(self):
@@ -110,8 +134,8 @@ class ParticleSystems:
         pos2 = self.pos[j_indices]
         directions = pos1 - pos2
 
-        directions[:, 0] -= np.round(directions[:, 0] / WIDTH) * WIDTH
-        directions[:, 1] -= np.round(directions[:, 1] / HEIGHT) * HEIGHT
+        directions[:, 0] -= np.round(directions[:, 0] / SIM_WIDTH) * SIM_WIDTH
+        directions[:, 1] -= np.round(directions[:, 1] / SIM_HEIGHT) * SIM_HEIGHT
 
         distance_sqs = np.einsum('ij,ij->i', directions, directions)
 
@@ -142,5 +166,5 @@ class ParticleSystems:
 
     def draw_particles(self, screen):
         for i in range(len(self.pos)):
-            colour = COLOUR_MAP[self.system_type[i]]
+            colour = PARTICLE_TYPES[self.system_type[i]]['colour']
             pygame.draw.circle(screen, colour, self.pos[i], RADIUS)
