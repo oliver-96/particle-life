@@ -1,6 +1,7 @@
 import pygame
 import numpy as np
 from collections import defaultdict
+import time
 
 from sim_config.setup_schema import SIM_WIDTH, SIM_HEIGHT, DRAG, MAX_DISTANCE, RADIUS, DT, FORCE_FACTOR
 from particles.particle_schema import PARTICLE_INTERACTIONS, PARTICLE_TYPES
@@ -12,23 +13,29 @@ NEIGHTBOUR_OFFSET = [(1,-1), (1,0), (1,1),(0,1)]
 max_width_cell = int(SIM_WIDTH // GRID_SIZE) - 1
 max_height_cell = int(SIM_HEIGHT // GRID_SIZE) - 1
 
+num_cells_x = int(SIM_WIDTH // GRID_SIZE)
+num_cells_y = int(SIM_HEIGHT // GRID_SIZE)
+
 
 class ParticleSystems:
 
-    grid = defaultdict(list)
-
-    def __init__(self):
+    def __init__(self, force_factor=FORCE_FACTOR, drag=DRAG):
         self.pos = np.empty((0, 2), dtype=np.float32)
         self.vel = np.empty((0, 2), dtype=np.float32)
         self.acc = np.empty((0, 2), dtype=np.float32)
         self.system_type = np.empty(0, dtype=int)
         self.pair_indicies = ()
 
+        self.force_factor = force_factor
+        self.drag = drag
+
+
     def add_system(self, number_of_particles, system_type, testing=False):
         if testing:
             x_list, y_list = self.get_testing_positions(number_of_particles)
             pos_array = np.column_stack((x_list, y_list))
             number_of_particles = len(x_list)
+            PARTICLE_INTERACTIONS[0, 0] = 0.5
         else:
             pos_array = np.random.rand(number_of_particles, 2) * [SIM_WIDTH, SIM_HEIGHT]
 
@@ -62,7 +69,7 @@ class ParticleSystems:
         return x_list, y_list
 
     def update_particles(self):
-        drag_force = self.vel**2 * DRAG * np.sign(self.vel) * -1
+        drag_force = self.vel**2 * self.drag * np.sign(self.vel) * -1
 
         self.acc += drag_force
         self.vel += self.acc * DT
@@ -75,57 +82,72 @@ class ParticleSystems:
             self.pos[:, dim] = np.mod(self.pos[:, dim], limit)
 
     def get_grid_position(self):
-        ParticleSystems.grid.clear()
-        grid_position = np.floor(self.pos / GRID_SIZE).astype(int)
 
-        for i in range(len(self.pos)):
-            ParticleSystems.grid[tuple(grid_position[i])].append(i)
+        grid = np.empty(num_cells_x * num_cells_y, dtype=object)
+        for i in range(len(grid)):
+            grid[i] = []
+        
+        grid_pos = np.floor(self.pos / GRID_SIZE).astype(int)
+        grid_keys = grid_pos[:, 1] * num_cells_x + grid_pos[:, 0]
+
+        for idx, key in enumerate(grid_keys):
+            grid[key].append(idx)
+
+        return grid
         
     def check_interactions(self):
-        self.get_grid_position()
+
+        grid_start_time = time.time()
+
+        grid = self.get_grid_position()
 
         i_indices = []
         j_indices = []
 
+        for gx in range(num_cells_x):
+            for gy in range(num_cells_y):
+                key = gy * num_cells_x + gx
+                cell_particles = grid[key]
 
-        for (gx, gy), cell_particles in ParticleSystems.grid.items():
-            for i in cell_particles:
-                for j in cell_particles:
-                    if i < j:
-                        i_indices.append(i)
-                        j_indices.append(j)
+                if len(cell_particles) > 1:
+                    for idx_i in range(len(cell_particles)):
+                        i = cell_particles[idx_i]
+                        for idx_j in range(idx_i + 1, len(cell_particles)):
+                            j = cell_particles[idx_j]
 
-            for dx, dy in NEIGHTBOUR_OFFSET:
+                            i_indices.append(i)
+                            j_indices.append(j)
 
-                neighbour_x = gx + dx
-                neighbour_y = gy + dy
+                for dx, dy in NEIGHTBOUR_OFFSET:
 
-                if neighbour_x > max_width_cell:
-                    neighbour_x = 0
-                if neighbour_y > max_height_cell:
-                    neighbour_y = 0
-                if neighbour_y < 0:
-                    neighbour_y = max_height_cell
+                    neighbour_x = gx + dx
+                    neighbour_y = gy + dy
 
-                neighbour_cell = (neighbour_x, neighbour_y)
-                
-                if neighbour_cell not in ParticleSystems.grid:
-                    continue
-                neighbour_particles = ParticleSystems.grid[neighbour_cell]
+                    if neighbour_x > max_width_cell:
+                        neighbour_x = 0
+                    if neighbour_y > max_height_cell:
+                        neighbour_y = 0
+                    if neighbour_y < 0:
+                        neighbour_y = max_height_cell
 
-                i_length = len(neighbour_particles)
-                for i in cell_particles:
-                    [i] * i_length
-                    i_indices.extend([i] * i_length)
-                    j_indices.extend(neighbour_particles)
-        
-        if not i_indices:
-            return
+                    nkey = neighbour_y * num_cells_x + neighbour_x
+                    neighbour_particles = grid[nkey]
+                    i_length = len(neighbour_particles)
+                    for i in cell_particles:
+                        i_indices.extend([i] * i_length)
+                        j_indices.extend(neighbour_particles)
+
 
         i_indices = np.array(i_indices)
         j_indices = np.array(j_indices)
 
+        grid_end_time = time.time()
+        print(f"Grid calculation time: {grid_end_time - grid_start_time:.4f} seconds")
+
+        distance_start_time = time.time()
         self.calculate_distance(i_indices, j_indices)
+        distance_end_time = time.time()
+        print(f"Distance calculation time: {distance_end_time - distance_start_time:.4f} seconds")
     
 
     def calculate_distance(self, i_indices, j_indices):
@@ -154,14 +176,19 @@ class ParticleSystems:
         g_2_values = PARTICLE_INTERACTIONS[self.system_type[j_indices], self.system_type[i_indices]]
         normalised_distances = distance / MAX_DISTANCE
 
+        force_time_start = time.time()
         force_mags_1 = calculate_forces(normalised_distances, g_1_values)
         force_mags_2 = calculate_forces(normalised_distances, g_2_values)
+       
 
-        force_1 = force_mags_1[:, None] * unit_vectors * MAX_DISTANCE * FORCE_FACTOR
-        force_2 = force_mags_2[:, None] * unit_vectors * MAX_DISTANCE * FORCE_FACTOR
+        force_1 = force_mags_1[:, None] * unit_vectors * MAX_DISTANCE * self.force_factor
+        force_2 = force_mags_2[:, None] * unit_vectors * MAX_DISTANCE * self.force_factor
 
         np.add.at(self.acc, i_indices, -force_1)
         np.add.at(self.acc, j_indices, +force_2)
+
+        force_time_end = time.time()
+        print(f"Force calculation time: {force_time_end - force_time_start:.4f} seconds")
  
 
     def draw_particles(self, screen):

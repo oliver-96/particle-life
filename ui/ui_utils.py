@@ -18,7 +18,6 @@ class ParticleInteractionUI:
         self.particle_colour_2 = None
 
     def draw_ui_elements(self, particle_type_list):
-        self.create_button_grid()
         self.draw_particle_key(particle_type_list)
         self.draw_heat_map(particle_type_list)
 
@@ -78,20 +77,14 @@ class ParticleInteractionUI:
             
     def draw_particle_key(self, particle_type_list):
 
-        # Draw row type colors - button
-        self.draw_square_grid(self.matrix_size, 1, START_X - CELL_SIZE, START_Y + button_y_offset, particle_type_list, 'particle_matrix')
-
-        # Draw column type colors - button
-        self.draw_square_grid(1, self.matrix_size, START_X + button_x_offset, START_Y, particle_type_list, 'particle_matrix')
-
         # Draw row type colors - heat map
-        self.draw_square_grid(self.matrix_size, 1, START_X - CELL_SIZE, START_Y + map_y_offset, particle_type_list, 'particle_matrix')
+        self.draw_square_grid(self.matrix_size, 1, START_X - CELL_SIZE, START_Y + map_y_offset + map_spacing, particle_type_list, 'particle_matrix')
 
         # Draw column type colors - heat map
-        self.draw_square_grid(1, self.matrix_size, START_X, START_Y + map_y_offset - CELL_SIZE, particle_type_list, 'particle_matrix')
+        self.draw_square_grid(1, self.matrix_size, START_X + map_spacing, START_Y + map_y_offset - CELL_SIZE, particle_type_list, 'particle_matrix')
 
     def draw_heat_map(self, particle_type_list):
-        self.draw_square_grid(self.matrix_size, self.matrix_size, START_X, START_Y + map_y_offset, particle_type_list, 'heatmap')
+        self.draw_square_grid(self.matrix_size, self.matrix_size, START_X + map_spacing, START_Y + map_y_offset + map_spacing, particle_type_list, 'heatmap')
 
     def draw_square_grid(self, row_number, column_number, START_X, START_Y, particle_type_list, colour_map):
         for i in range(row_number):
