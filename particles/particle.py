@@ -1,7 +1,6 @@
 import pygame
 import numpy as np
 import time
-from numba import njit
 
 from sim_config.setup_schema import SIM_WIDTH, SIM_HEIGHT, DRAG, MAX_DISTANCE, RADIUS, DT, FORCE_FACTOR
 from particles.particle_schema import PARTICLE_INTERACTIONS, PARTICLE_TYPES
@@ -98,7 +97,6 @@ class ParticleSystems:
 
         for key in range(num_cells_x * num_cells_y):
 
-
             gx = key % num_cells_x
             gy = key // num_cells_x
 
@@ -192,17 +190,6 @@ class ParticleSystems:
         for i in range(len(self.pos)):
             colour = PARTICLE_TYPES[self.system_type[i]]['colour']
             pygame.draw.circle(screen, colour, self.pos[i], RADIUS)
-
-
-# @njit
-# def accumulate_forces(i_indices, j_indices, force_1, force_2, acc):
-#     for idx in range(i_indices.shape[0]):
-#         i = i_indices[idx]
-#         j = j_indices[idx]
-
-#         for d in range(2):
-#             acc[i, d] -= force_1[idx, d]
-#             acc[j, d] += force_2[idx, d]
 
 
 
