@@ -1,5 +1,4 @@
 import numpy as np
-from sim_config.setup_schema import MIN_DISTANCE
 
 #  Particle types
 PARTICLE_TYPES = {
@@ -26,6 +25,21 @@ PARTICLE_TYPES = {
     },
     6: {
         'colour': (0, 255, 255),
+    },
+    7: {
+        'colour': (128, 128, 128),
+    },
+    8: {
+        'colour': (128, 0, 0),
+    },
+    9: {
+        'colour': (0, 128, 0),
+    },
+    10: {
+        'colour': (0, 0, 128),
+    },
+    11: {
+        'colour': (128, 128, 0),
     },
 }
 

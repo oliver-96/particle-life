@@ -1,25 +1,37 @@
 import numpy as np
-from numba import njit
+from numba import njit  
 
 from sim_config.setup_schema import MIN_DISTANCE, MAX_FORCE_DISTANCE
 
-@njit
+@njit()
 def calculate_forces(normalised_distances, g_values):
+    n = normalised_distances.shape[0]
+    forces = np.empty(n, dtype=np.float32)
 
-    forces = np.zeros_like(normalised_distances)
+    for i in range(n):
+        d = normalised_distances[i]
+        g = g_values[i]
 
-    # Zone 1: distance <= MIN_DISTANCE
-    mask1 = normalised_distances <= MIN_DISTANCE
-    forces[mask1] = (normalised_distances[mask1] / MIN_DISTANCE) - 1
+        if d <= MIN_DISTANCE:
+            forces[i] = (d / MIN_DISTANCE) - 1.0
 
-    # Zone 2: MIN_DISTANCE < distance <= MAX_FORCE_DISTANCE
-    mask2 = (normalised_distances > MIN_DISTANCE) & (normalised_distances <= MAX_FORCE_DISTANCE)
-    forces[mask2] = g_values[mask2] / (MAX_FORCE_DISTANCE - MIN_DISTANCE) * (normalised_distances[mask2] - MIN_DISTANCE)
+        elif d <= MAX_FORCE_DISTANCE:
+            forces[i] = g / (MAX_FORCE_DISTANCE - MIN_DISTANCE) * (d - MIN_DISTANCE)
 
-    # Zone 3: MAX_FORCE_DISTANCE < distance <= 1
-    mask3 = (normalised_distances > MAX_FORCE_DISTANCE) & (normalised_distances <= 1)
-    forces[mask3] = g_values[mask3] / (1 - MAX_FORCE_DISTANCE) * (1 - normalised_distances[mask3])
+        elif d <= 1.0:
+            forces[i] = g / (1.0 - MAX_FORCE_DISTANCE) * (1.0 - d)
 
-    # Zone 4: distance > 1 — forces remain 0
+        else:
+            forces[i] = 0.0
+
     return forces
-    
+
+@njit
+def accumulate_forces(i_indices, j_indices, force_1, force_2, acc):
+    for idx in range(i_indices.shape[0]):
+        i = i_indices[idx]
+        j = j_indices[idx]
+
+        for d in range(2):
+            acc[i, d] -= force_1[idx, d]
+            acc[j, d] += force_2[idx, d]

@@ -1,11 +1,11 @@
 import pygame
 import numpy as np
-from collections import defaultdict
 import time
+from numba import njit
 
 from sim_config.setup_schema import SIM_WIDTH, SIM_HEIGHT, DRAG, MAX_DISTANCE, RADIUS, DT, FORCE_FACTOR
 from particles.particle_schema import PARTICLE_INTERACTIONS, PARTICLE_TYPES
-from particles.particle_force_calc import calculate_forces
+from particles.particle_force_calc import calculate_forces, accumulate_forces
 
 GRID_SIZE = MAX_DISTANCE * 1.25
 NEIGHTBOUR_OFFSET = [(1,-1), (1,0), (1,1),(0,1)]
@@ -24,11 +24,9 @@ class ParticleSystems:
         self.vel = np.empty((0, 2), dtype=np.float32)
         self.acc = np.empty((0, 2), dtype=np.float32)
         self.system_type = np.empty(0, dtype=int)
-        self.pair_indicies = ()
 
         self.force_factor = force_factor
         self.drag = drag
-
 
     def add_system(self, number_of_particles, system_type, testing=False):
         if testing:
@@ -47,9 +45,6 @@ class ParticleSystems:
         self.vel = np.vstack([self.vel, vel_array])
         self.acc = np.vstack([self.acc, acc_array])
         self.system_type = np.concatenate([self.system_type, system_type_array])
-
-        self.pair_indicies = np.triu_indices(len(self.pos), k=1)
-
 
     def get_testing_positions(self, number_of_particles):
         grid_size = int(np.sqrt(number_of_particles))  
@@ -82,10 +77,7 @@ class ParticleSystems:
             self.pos[:, dim] = np.mod(self.pos[:, dim], limit)
 
     def get_grid_position(self):
-
-        grid = np.empty(num_cells_x * num_cells_y, dtype=object)
-        for i in range(len(grid)):
-            grid[i] = []
+        grid = [[] for _ in range(num_cells_x * num_cells_y)]
         
         grid_pos = np.floor(self.pos / GRID_SIZE).astype(int)
         grid_keys = grid_pos[:, 1] * num_cells_x + grid_pos[:, 0]
@@ -104,38 +96,44 @@ class ParticleSystems:
         i_indices = []
         j_indices = []
 
-        for gx in range(num_cells_x):
-            for gy in range(num_cells_y):
-                key = gy * num_cells_x + gx
-                cell_particles = grid[key]
+        for key in range(num_cells_x * num_cells_y):
 
-                if len(cell_particles) > 1:
-                    for idx_i in range(len(cell_particles)):
-                        i = cell_particles[idx_i]
-                        for idx_j in range(idx_i + 1, len(cell_particles)):
-                            j = cell_particles[idx_j]
 
-                            i_indices.append(i)
-                            j_indices.append(j)
+            gx = key % num_cells_x
+            gy = key // num_cells_x
 
-                for dx, dy in NEIGHTBOUR_OFFSET:
+            cell_particles = grid[key]
 
-                    neighbour_x = gx + dx
-                    neighbour_y = gy + dy
+            if len(cell_particles) == 0:
+                continue
 
-                    if neighbour_x > max_width_cell:
-                        neighbour_x = 0
-                    if neighbour_y > max_height_cell:
-                        neighbour_y = 0
-                    if neighbour_y < 0:
-                        neighbour_y = max_height_cell
+            if len(cell_particles) > 1:
+                for idx_i in range(len(cell_particles)):
+                    i = cell_particles[idx_i]
+                    for idx_j in range(idx_i + 1, len(cell_particles)):
+                        j = cell_particles[idx_j]
 
-                    nkey = neighbour_y * num_cells_x + neighbour_x
-                    neighbour_particles = grid[nkey]
-                    i_length = len(neighbour_particles)
-                    for i in cell_particles:
-                        i_indices.extend([i] * i_length)
-                        j_indices.extend(neighbour_particles)
+                        i_indices.append(i)
+                        j_indices.append(j)
+
+            for dx, dy in NEIGHTBOUR_OFFSET:
+
+                neighbour_x = gx + dx
+                neighbour_y = gy + dy
+
+                neighbour_x %= num_cells_x
+                neighbour_y %= num_cells_y
+
+                nkey = neighbour_y * num_cells_x + neighbour_x
+                neighbour_particles = grid[nkey]
+
+                i_length = len(neighbour_particles)
+                if i_length == 0:
+                    continue
+
+                for i in cell_particles:
+                    i_indices.extend([i] * i_length)
+                    j_indices.extend(neighbour_particles)
 
 
         i_indices = np.array(i_indices)
@@ -184,8 +182,7 @@ class ParticleSystems:
         force_1 = force_mags_1[:, None] * unit_vectors * MAX_DISTANCE * self.force_factor
         force_2 = force_mags_2[:, None] * unit_vectors * MAX_DISTANCE * self.force_factor
 
-        np.add.at(self.acc, i_indices, -force_1)
-        np.add.at(self.acc, j_indices, +force_2)
+        accumulate_forces(i_indices, j_indices, force_1, force_2, self.acc)
 
         force_time_end = time.time()
         print(f"Force calculation time: {force_time_end - force_time_start:.4f} seconds")
@@ -195,3 +192,17 @@ class ParticleSystems:
         for i in range(len(self.pos)):
             colour = PARTICLE_TYPES[self.system_type[i]]['colour']
             pygame.draw.circle(screen, colour, self.pos[i], RADIUS)
+
+
+# @njit
+# def accumulate_forces(i_indices, j_indices, force_1, force_2, acc):
+#     for idx in range(i_indices.shape[0]):
+#         i = i_indices[idx]
+#         j = j_indices[idx]
+
+#         for d in range(2):
+#             acc[i, d] -= force_1[idx, d]
+#             acc[j, d] += force_2[idx, d]
+
+
+

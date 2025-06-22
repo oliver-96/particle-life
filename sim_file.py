@@ -78,7 +78,7 @@ def run_sim(testing=False):
 
         interacation_start_time = time.time()
         particle_manager.check_interactions()
-        interacation_start_time = time.time()
+        interacation_end_time = time.time()
 
         particle_manager.update_particles()
         particle_manager.apply_boundary_conditions()
@@ -91,6 +91,6 @@ def run_sim(testing=False):
 
         end_time = time.time()
         print(f"Execution time: {end_time - start_time:.4f} seconds")
-        print(f"Interaction time: {interacation_start_time - start_time:.4f} seconds")
+        print(f"Interaction time: {interacation_end_time - interacation_start_time:.4f} seconds")
 
     pg.quit()
